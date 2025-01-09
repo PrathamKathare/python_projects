@@ -22,4 +22,4 @@ To run the Contact Book on your local machine, follow these steps:
 ### Installation
 1. Clone this repository to your local machine:
    ```bash
-   git clone https://github.com/yourusername/contact-book.git
+   git clone https://github.com/yourusername/contactbook.git
