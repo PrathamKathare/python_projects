@@ -1,4 +1,5 @@
-import os
+import tkinter as tk
+from tkinter import messagebox, simpledialog
 
 class Contact:
     def __init__(self, name, phone, email, address):
@@ -17,24 +18,13 @@ class ContactBook:
     def add_contact(self, name, phone, email, address):
         new_contact = Contact(name, phone, email, address)
         self.contacts.append(new_contact)
-        print("Contact added successfully!")
 
     def view_contacts(self):
-        if not self.contacts:
-            print("No contacts available.")
-        else:
-            print("\nContact List:")
-            for contact in self.contacts:
-                print(contact)
+        return [str(contact) for contact in self.contacts]
 
     def search_contact(self, search_term):
         found_contacts = [contact for contact in self.contacts if search_term.lower() in contact.name.lower() or search_term in contact.phone]
-        if found_contacts:
-            print("\nSearch Results:")
-            for contact in found_contacts:
-                print(contact)
-        else:
-            print("No contacts found with that search term.")
+        return [str(contact) for contact in found_contacts]
 
     def update_contact(self, old_name, new_name, new_phone, new_email, new_address):
         contact = self.find_contact_by_name(old_name)
@@ -43,17 +33,15 @@ class ContactBook:
             contact.phone = new_phone
             contact.email = new_email
             contact.address = new_address
-            print("Contact updated successfully!")
-        else:
-            print("Contact not found.")
+            return True
+        return False
 
     def delete_contact(self, name):
         contact = self.find_contact_by_name(name)
         if contact:
             self.contacts.remove(contact)
-            print("Contact deleted successfully!")
-        else:
-            print("Contact not found.")
+            return True
+        return False
 
     def find_contact_by_name(self, name):
         for contact in self.contacts:
@@ -61,73 +49,101 @@ class ContactBook:
                 return contact
         return None
 
-def display_menu():
-    print("\nContact Book Menu:")
-    print("1. Add Contact")
-    print("2. View Contacts")
-    print("3. Search Contact")
-    print("4. Update Contact")
-    print("5. Delete Contact")
-    print("6. Exit")
+class ContactBookApp:
+    def __init__(self, root, contact_book):
+        self.root = root
+        self.contact_book = contact_book
+        self.root.title("Contact Book")
+        self.root.geometry("500x500")
+        self.root.config(bg="#f2f2f2")
+        self.create_widgets()
 
-def get_user_choice():
-    while True:
-        try:
-            choice = int(input("Please choose an option: "))
-            if choice in range(1, 7):
-                return choice
+    def create_widgets(self):
+        self.contact_listbox = tk.Listbox(self.root, width=50, height=15, bg="#e0f7fa", font=("Arial", 12))
+        self.contact_listbox.pack(pady=10)
+
+        self.add_button = tk.Button(self.root, text="Add Contact", width=20, command=self.add_contact, bg="#4caf50", fg="white", font=("Arial", 12))
+        self.add_button.pack(pady=5)
+
+        self.view_button = tk.Button(self.root, text="View Contacts", width=20, command=self.view_contacts, bg="#2196f3", fg="white", font=("Arial", 12))
+        self.view_button.pack(pady=5)
+
+        self.search_button = tk.Button(self.root, text="Search Contact", width=20, command=self.search_contact, bg="#ff9800", fg="white", font=("Arial", 12))
+        self.search_button.pack(pady=5)
+
+        self.update_button = tk.Button(self.root, text="Update Contact", width=20, command=self.update_contact, bg="#ffeb3b", fg="black", font=("Arial", 12))
+        self.update_button.pack(pady=5)
+
+        self.delete_button = tk.Button(self.root, text="Delete Contact", width=20, command=self.delete_contact, bg="#f44336", fg="white", font=("Arial", 12))
+        self.delete_button.pack(pady=5)
+
+        self.exit_button = tk.Button(self.root, text="Exit", width=20, command=self.root.quit, bg="#9e9e9e", fg="white", font=("Arial", 12))
+        self.exit_button.pack(pady=5)
+
+    def add_contact(self):
+        name = simpledialog.askstring("Input", "Enter name:")
+        phone = simpledialog.askstring("Input", "Enter phone number:")
+        email = simpledialog.askstring("Input", "Enter email:")
+        address = simpledialog.askstring("Input", "Enter address:")
+        
+        if name and phone and email and address:
+            self.contact_book.add_contact(name, phone, email, address)
+            messagebox.showinfo("Success", "Contact added successfully!")
+            self.view_contacts()
+        else:
+            messagebox.showwarning("Input Error", "All fields are required!")
+
+    def view_contacts(self):
+        self.contact_listbox.delete(0, tk.END)
+        contacts = self.contact_book.view_contacts()
+        if contacts:
+            for contact in contacts:
+                self.contact_listbox.insert(tk.END, contact)
+        else:
+            self.contact_listbox.insert(tk.END, "No contacts available.")
+
+    def search_contact(self):
+        search_term = simpledialog.askstring("Search", "Enter name or phone number to search:")
+        if search_term:
+            found_contacts = self.contact_book.search_contact(search_term)
+            self.contact_listbox.delete(0, tk.END)
+            if found_contacts:
+                for contact in found_contacts:
+                    self.contact_listbox.insert(tk.END, contact)
             else:
-                print("Invalid choice. Please choose a number between 1 and 6.")
-        except ValueError:
-            print("Invalid input. Please enter a valid number.")
+                self.contact_listbox.insert(tk.END, "No contacts found.")
 
-def add_contact_ui(contact_book):
-    print("\nAdd a New Contact:")
-    name = input("Enter name: ")
-    phone = input("Enter phone number: ")
-    email = input("Enter email: ")
-    address = input("Enter address: ")
-    contact_book.add_contact(name, phone, email, address)
+    def update_contact(self):
+        old_name = simpledialog.askstring("Update", "Enter the name of the contact to update:")
+        contact = self.contact_book.find_contact_by_name(old_name)
+        if contact:
+            new_name = simpledialog.askstring("Input", "Enter new name:", initialvalue=contact.name)
+            new_phone = simpledialog.askstring("Input", "Enter new phone number:", initialvalue=contact.phone)
+            new_email = simpledialog.askstring("Input", "Enter new email:", initialvalue=contact.email)
+            new_address = simpledialog.askstring("Input", "Enter new address:", initialvalue=contact.address)
+            
+            if self.contact_book.update_contact(old_name, new_name, new_phone, new_email, new_address):
+                messagebox.showinfo("Success", "Contact updated successfully!")
+                self.view_contacts()
+            else:
+                messagebox.showwarning("Error", "Contact update failed.")
+        else:
+            messagebox.showwarning("Error", "Contact not found.")
 
-def view_contacts_ui(contact_book):
-    contact_book.view_contacts()
-
-def search_contact_ui(contact_book):
-    search_term = input("\nEnter name or phone number to search: ")
-    contact_book.search_contact(search_term)
-
-def update_contact_ui(contact_book):
-    old_name = input("\nEnter the name of the contact you want to update: ")
-    new_name = input("Enter new name: ")
-    new_phone = input("Enter new phone number: ")
-    new_email = input("Enter new email: ")
-    new_address = input("Enter new address: ")
-    contact_book.update_contact(old_name, new_name, new_phone, new_email, new_address)
-
-def delete_contact_ui(contact_book):
-    name = input("\nEnter the name of the contact you want to delete: ")
-    contact_book.delete_contact(name)
+    def delete_contact(self):
+        name = simpledialog.askstring("Delete", "Enter the name of the contact to delete:")
+        if name:
+            if self.contact_book.delete_contact(name):
+                messagebox.showinfo("Success", "Contact deleted successfully!")
+                self.view_contacts()
+            else:
+                messagebox.showwarning("Error", "Contact not found.")
 
 def main():
     contact_book = ContactBook()
-
-    while True:
-        display_menu()
-        choice = get_user_choice()
-
-        if choice == 1:
-            add_contact_ui(contact_book)
-        elif choice == 2:
-            view_contacts_ui(contact_book)
-        elif choice == 3:
-            search_contact_ui(contact_book)
-        elif choice == 4:
-            update_contact_ui(contact_book)
-        elif choice == 5:
-            delete_contact_ui(contact_book)
-        elif choice == 6:
-            print("Exiting the Contact Book. Goodbye!")
-            break
+    root = tk.Tk()
+    app = ContactBookApp(root, contact_book)
+    root.mainloop()
 
 if __name__ == "__main__":
     main()
